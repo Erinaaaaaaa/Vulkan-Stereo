@@ -1,0 +1,13 @@
+{
+  "name": "quadbuffer",
+  "version-string": "0.1",
+  "dependencies": [
+    {
+      "name": "sdl2",
+      "features": ["vulkan"]
+    },
+    "glslang",
+    "glm",
+    "vulkan"
+  ]
+}
