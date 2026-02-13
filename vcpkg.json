@@ -8,6 +8,7 @@
     },
     "glslang",
     "glm",
-    "vulkan"
+    "vulkan",
+    "vulkan-utility-libraries"
   ]
 }

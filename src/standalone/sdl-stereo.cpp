@@ -1,5 +1,6 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
 #include <iostream>
@@ -15,6 +16,8 @@
 #include "glm/glm.hpp"
 #include <array>
 #include <format>
+
+#include "util.h"
 
 #undef max // Causes issues on std::numeric_limits
 
@@ -566,12 +569,7 @@ private:
     }
 
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
-//        for (const auto& availablePresentMode : availablePresentModes) {
-//            if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-//                return availablePresentMode;
-//            }
-//        }
-
+        // Hardware stereoscopy with Vulkan does not seem to work with any other present mode than FIFO.
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
@@ -597,6 +595,8 @@ private:
     void createSwapChain() {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
+        print_surface_caps(swapChainSupport.capabilities);
+
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
@@ -605,6 +605,11 @@ private:
 
         if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
             imageCount = swapChainSupport.capabilities.maxImageCount;
+        }
+
+        if (swapChainSupport.capabilities.maxImageArrayLayers < 2)
+        {
+            std::cerr << ("selected surface does not support 2 image array layers, required for stereoscopy. expect issues") << std::endl;
         }
 
         VkSwapchainCreateInfoKHR createInfo{};
@@ -639,8 +644,10 @@ private:
 
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-        if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create swap chain!");
+        VkResult ret = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+
+        if (ret != VK_SUCCESS) {
+            throw std::runtime_error(std::format("failed to create swap chain! error: {}", string_VkResult(ret)));
         }
 
         vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -968,6 +975,7 @@ private:
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
 
+        // Left clear: blue - Right clear: red
         VkClearValue clearColor = {{{left ? 0.0f : 0.3f, 0.0f, left ? 0.3f : 0.0f, 1.0f}}};
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;

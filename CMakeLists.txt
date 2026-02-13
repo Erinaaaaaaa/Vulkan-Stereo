@@ -4,19 +4,20 @@ project(quadbuffer)
 set(CMAKE_CXX_STANDARD 23)
 
 
-# Bibliothèques
+# Libraries
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Vulkan MODULE REQUIRED COMPONENTS glslc)
+find_package(VulkanUtilityLibraries CONFIG REQUIRED)
 find_program(glslc_executable NAMES glslc HINTS Vulkan::glslc)
 
 # Includes
 
 include_directories(AFTER SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-# Shaders Vulkan
+# Vulkan shaders
 
 set(SHADER_SOURCE_DIR src/vk_shaders)
 set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/shaders)
@@ -61,6 +62,8 @@ endforeach()
 
 add_custom_target(shady ALL DEPENDS ${SPV_SHADERS})
 
+set(VULKAN_LIB_LIST "vulkan-1")
+
 # Tests
 
 file(GLOB STANDALONE_APPS src/standalone/*.cpp)
@@ -68,12 +71,14 @@ file(GLOB STANDALONE_APPS src/standalone/*.cpp)
 foreach(FILE ${STANDALONE_APPS})
     cmake_path(GET FILE STEM PROGNAME)
     SET(TGT "standalone-${PROGNAME}")
-    add_executable("${TGT}" ${FILE})
-    set(VULKAN_LIB_LIST "vulkan-1")
+    add_executable("${TGT}"
+            ${FILE}
+            src/util/util.cpp)
     target_link_libraries("${TGT}" PRIVATE glm::glm)
-    target_link_libraries("${TGT}" PRIVATE Vulkan::Vulkan)
+    target_link_libraries("${TGT}" PRIVATE Vulkan::Vulkan Vulkan::UtilityHeaders)
     target_link_libraries("${TGT}" PRIVATE SDL2::SDL2main SDL2::SDL2)
     add_dependencies("${TGT}" shady)
-    target_include_directories("${TGT}" PUBLIC ${Vulkan_INCLUDE_DIR})
+    target_include_directories("${TGT}"
+            PUBLIC ${Vulkan_INCLUDE_DIR}
+            PUBLIC "src/include")
 endforeach ()
-
