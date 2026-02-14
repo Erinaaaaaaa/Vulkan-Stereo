@@ -587,6 +587,8 @@ private:
     void createSwapChain() {
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
+        print_surface_caps(swapChainSupport.capabilities);
+
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
         VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
@@ -629,8 +631,10 @@ private:
 
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-        if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create swap chain!");
+        VkResult ret = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+
+        if (ret != VK_SUCCESS) {
+            throw std::runtime_error(std::format("failed to create swap chain! error: {}", string_VkResult(ret)));
         }
 
         vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -915,6 +919,7 @@ private:
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
 
+        // Clear color: blue
         VkClearValue clearColor = {{{0.0f, 0.0f, 0.3f, 1.0f}}};
         renderPassInfo.clearValueCount = 1;
         renderPassInfo.pClearValues = &clearColor;
