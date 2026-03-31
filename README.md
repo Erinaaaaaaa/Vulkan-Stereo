@@ -12,3 +12,8 @@ sample code on how to do stereoscopy (or quadbuffer) in vulkan on Windows
   - surface capabilities -> `maxImageArrayLayers` must be 2 (or higher?)
   - workstation NVIDIA Quadro/Quadro RTX/RTX cards are known to work
   - 3D must be enabled in Windows display settings
+
+## expected results
+
+- **standalone-sdl-mono**: rainbow rectangle on top of a blue background
+- **standalone-sdl-stereo**: if hardware vulkan stereo is supported, rainbow rectangle on top of a flickering red/blue background
